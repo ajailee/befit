@@ -1,10 +1,19 @@
-import 'package:befit/Screen.dart/Theme/MyTheme.dart';
+import 'package:befit/Model/bmiData.dart';
+
+import 'package:befit/Provider/updateui.dart';
+import 'package:befit/Screen.dart/chart.dart';
+import 'package:flutter/services.dart';
+
+import 'package:provider/provider.dart';
+
+import '/Theme/MyTheme.dart';
 import 'package:befit/Screen.dart/results.dart';
 import 'package:flutter/material.dart';
 import 'package:height_slider/height_slider.dart';
 
 class NewUI extends StatefulWidget {
   static String routeName = 'homePage';
+
   @override
   _NewUIState createState() => _NewUIState();
 }
@@ -14,8 +23,14 @@ class _NewUIState extends State<NewUI> {
   TextEditingController _ageController = new TextEditingController(text: '20');
   TextEditingController _weightController =
       new TextEditingController(text: '40');
+  bool _male = true;
+  bool _female = false;
+
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    UpdateUI ui = Provider.of<UpdateUI>(context);
+    ui.loadlist();
     return SingleChildScrollView(
       child: Container(
         child: Column(
@@ -29,7 +44,7 @@ class _NewUIState extends State<NewUI> {
                 GestureDetector(
                   onTap: () => Scaffold.of(context).openDrawer(),
                   child: Container(
-                    child: Icon(Icons.menu),
+                    child: Icon(Icons.person),
                     margin: EdgeInsets.all(10),
                     height: 50,
                     width: 50,
@@ -47,7 +62,7 @@ class _NewUIState extends State<NewUI> {
                 GestureDetector(
                   onTap: () => Scaffold.of(context).openEndDrawer(),
                   child: Container(
-                    child: Icon(Icons.person),
+                    child: Icon(Icons.bar_chart_rounded),
                     margin: EdgeInsets.all(10),
                     height: 50,
                     width: 50,
@@ -66,24 +81,48 @@ class _NewUIState extends State<NewUI> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Container(
-                  height: MediaQuery.of(context).size.height * .091,
-                  width: MediaQuery.of(context).size.width * .4,
-                  child: Center(child: Text('Male')),
-                  decoration: BoxDecoration(
-                    gradient: MyTheme.linearGradient,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: MyTheme.customShodowforButton,
+                GestureDetector(
+                  onTap: () {
+                    selected('Male');
+                    setState(() {
+                      _male = true;
+                      _female = false;
+                    });
+                  },
+                  child: Container(
+                    height: MediaQuery.of(context).size.height * .091,
+                    width: MediaQuery.of(context).size.width * .4,
+                    child: Center(child: Text('Male')),
+                    decoration: BoxDecoration(
+                      gradient: _male
+                          ? LinearGradient(
+                              colors: [Colors.green, Colors.greenAccent])
+                          : MyTheme.linearGradient,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: MyTheme.customShodowforButton,
+                    ),
                   ),
                 ),
-                Container(
-                  height: MediaQuery.of(context).size.height * .091,
-                  width: MediaQuery.of(context).size.width * .4,
-                  child: Center(child: Text('Female')),
-                  decoration: BoxDecoration(
-                    gradient: MyTheme.linearGradient,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: MyTheme.customShodowforButton,
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _female = true;
+                      _male = false;
+                    });
+                    selected('Female');
+                  },
+                  child: Container(
+                    height: MediaQuery.of(context).size.height * .091,
+                    width: MediaQuery.of(context).size.width * .4,
+                    child: Center(child: Text('Female')),
+                    decoration: BoxDecoration(
+                      gradient: _female
+                          ? LinearGradient(
+                              colors: [Colors.green, Colors.greenAccent])
+                          : MyTheme.linearGradient,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: MyTheme.customShodowforButton,
+                    ),
                   ),
                 )
               ],
@@ -256,34 +295,33 @@ class _NewUIState extends State<NewUI> {
               onTap: () {
                 double weight = double.parse(_weightController.text);
                 double bmi = (weight / height / height * 10000);
-                String _str = '';
-
-                if (bmi < 18.5) {
-                  _str = 'you are considered to be underweight.';
-                } else if (bmi >= 18.5 && bmi <= 24.9) {
-                  _str =
-                      'you are considered to be within a healthy weight range';
-                } else if (bmi >= 25.0 && bmi <= 29.9) {
-                  _str = 'you are considered to be overweight';
-                } else {
-                  _str = ' you are considered to be obese.';
-                }
 
                 String stringbmi = bmi.toStringAsFixed(2);
 
-                Navigator.pushNamed(context, Results.roteName,
-                    arguments: double.parse(stringbmi));
+                Navigator.pushNamed(
+                  context,
+                  Results.roteName,
+                  arguments: BmiData(
+                    name: ui.name,
+                    height: height,
+                    weight: int.parse(_weightController.text),
+                    bmi: double.parse(stringbmi),
+                    date: DateTime.now(),
+                  ),
+                );
               },
-              child: Container(
+              child: AnimatedContainer(
+                curve: Curves.bounceInOut,
                 margin: EdgeInsets.only(bottom: 10),
                 height: MediaQuery.of(context).size.height * .06,
                 width: MediaQuery.of(context).size.width * .8,
-                child: Center(child: Text("Let's Begin")),
+                child: Center(child: Text("Let's Begin ${ui.name}")),
                 decoration: BoxDecoration(
                   gradient: MyTheme.linearGradient,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: MyTheme.customShodowforButton,
                 ),
+                duration: Duration(milliseconds: 5),
               ),
             ),
           ],
@@ -291,4 +329,6 @@ class _NewUIState extends State<NewUI> {
       ),
     );
   }
+
+  void selected(String s) {}
 }
